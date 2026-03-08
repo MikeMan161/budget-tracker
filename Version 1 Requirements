@@ -1,0 +1,19 @@
+1. Requirements for Version 1
+Transaction Management: Users can add, view, and delete income or expense entries.
+Category Organization: A method to group spending into predefined categories like Food, Rent, and Entertainment.
+Local Data Storage: All information is saved to a local CSV file to ensure data persists after the app is closed.
+Simple Interface: The application provides a basic form for entering amounts, dates, and descriptions with clear navigation.
+
+2. Use Case Analysis
+The following use cases describe the primary interactions between the User and the system for Version 1:
+Use Case: Add Transaction: The user enters a numerical amount, selects a category, and provides a description to record an expense.
+Use Case: Delete Transaction: The user selects an existing entry from the list and removes it from the record.
+Use Case: View Transactions: The user views a list of all recorded financial activities in a structured table.
+Use Case: Persistent Loading (System): The system automatically reads the local CSV file upon startup to populate the interface with previous data.
+
+3. Class Diagram (Domain Model)
+The class model describes the objects and logic used in the BudgetApp.java implementation:
+Class: BudgetApp: Acts as the main controller that manages the GUI, handles user events, and coordinates data flow.
+Class: DefaultTableModel: Manages the underlying data structure for the transaction list, including rows for Date, Amount, Category, and Description.
+Class: File / IO Utility: Handles the physical reading and writing of data to finance_data.csv to satisfy the persistence requirements.
+Class: JFrame/JPanel: Provides the visual containers and layout managers required for a functional graphical user interface.
