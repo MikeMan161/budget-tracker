@@ -64,4 +64,14 @@ public class Transaction {
                 ", description=" + description + '\'' +
                 ", type='" + type + '\'' + '}';
     }
+
+    public Object[] toRow() {
+        return new Object[] {
+                date.toString(),
+                amount,
+                category,
+                description,
+                type
+        };
+    }
 }
