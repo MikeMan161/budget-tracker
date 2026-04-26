@@ -16,6 +16,8 @@ public class BudgetApp {
     private JComboBox<String> filterTypeBox;
  
     private JLabel balanceLabel, incomeLabel, expenseLabel;
+
+    private StatsPanel statsPanel;
  
     private final BudgetManager budgetManager;
     private final String FILE_NAME = "finance_data.csv";
@@ -30,14 +32,35 @@ public class BudgetApp {
     }
  
     private void prepareGUI() {
-        frame = new JFrame("Personal Budget Tracker - V2");
-        frame.setSize(800, 600);
+        frame = new JFrame("Personal Budget Tracker - V3");
+        frame.setSize(900, 620);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout(5, 5));
- 
+
+        // Top input panel (always visible above tabs)
         frame.add(buildInputPanel(), BorderLayout.NORTH);
-        frame.add(buildTablePanel(), BorderLayout.CENTER);
-        frame.add(buildSouthPanel(), BorderLayout.SOUTH);
+
+        // Tabbed center area
+        JTabbedPane tabs = new JTabbedPane();
+
+        // Tab 1: Transactions table + summary/buttons
+        JPanel transactionsTab = new JPanel(new BorderLayout(5, 5));
+        transactionsTab.add(buildTablePanel(), BorderLayout.CENTER);
+        transactionsTab.add(buildSouthPanel(), BorderLayout.SOUTH);
+        tabs.addTab("Transactions", transactionsTab);
+
+        // Tab 2: Statistics charts
+        statsPanel = new StatsPanel();
+        tabs.addTab("Statistics", statsPanel);
+
+        // Refresh charts when switching to Statistics tab
+        tabs.addChangeListener(e -> {
+            if (tabs.getSelectedIndex() == 1) {
+                statsPanel.refresh(budgetManager.getTransactions());
+            }
+        });
+
+        frame.add(tabs, BorderLayout.CENTER);
  
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -49,11 +72,10 @@ public class BudgetApp {
         frame.setVisible(true);
     }
  
-    // --- Input Panel (top) ---
+    // --- Input Panel (top, always visible) ---
     private JPanel buildInputPanel() {
         JPanel wrapper = new JPanel(new BorderLayout(5, 5));
  
-        // Row 1: Amount, Category, Type, Description
         JPanel inputRow = new JPanel(new GridLayout(2, 6, 5, 5));
  
         inputRow.add(new JLabel("Amount:"));
@@ -77,7 +99,6 @@ public class BudgetApp {
         addButton.addActionListener(e -> addTransaction());
         inputRow.add(addButton);
  
-        // Row 2: Filter controls
         inputRow.add(new JLabel("Filter Category:"));
         filterCategoryBox = new JComboBox<>(new String[]{"All", "Food", "Rent", "Entertainment", "Utilities", "Other"});
         inputRow.add(filterCategoryBox);
@@ -94,20 +115,19 @@ public class BudgetApp {
         clearFilterButton.addActionListener(e -> clearFilter());
         inputRow.add(clearFilterButton);
  
-        // Empty cell to fill grid
         inputRow.add(new JLabel(""));
  
         wrapper.add(inputRow, BorderLayout.CENTER);
         return wrapper;
     }
  
-    // --- Table Panel (center) ---
+    // --- Table Panel ---
     private JScrollPane buildTablePanel() {
         String[] columnNames = {"Date", "Amount", "Category", "Description", "Type"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Table is read-only; edits go through the form
+                return false;
             }
         };
         table = new JTable(tableModel);
@@ -115,11 +135,10 @@ public class BudgetApp {
         return new JScrollPane(table);
     }
  
-    // --- South Panel: summary + delete button ---
+    // --- South Panel: summary + delete/edit buttons ---
     private JPanel buildSouthPanel() {
         JPanel southPanel = new JPanel(new BorderLayout(5, 5));
  
-        // Summary labels
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
         incomeLabel  = new JLabel("Income: $0.00");
         expenseLabel = new JLabel("Expenses: $0.00");
@@ -130,16 +149,13 @@ public class BudgetApp {
         summaryPanel.add(expenseLabel);
         summaryPanel.add(balanceLabel);
  
-        // Delete button
         JButton deleteButton = new JButton("Delete Selected");
         deleteButton.setForeground(Color.RED);
         deleteButton.addActionListener(e -> deleteTransaction());
 
-        // Edit button
         JButton editButton = new JButton("Edit Selected");
         editButton.addActionListener(e -> startEditTransaction());
 
-        // Buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
@@ -152,17 +168,11 @@ public class BudgetApp {
     // --- Core Actions ---
  
     private void addTransaction() {
-        // TODO for Iteration 3
-        // if editingIndex != -1, update existing transaction instead of adding a new one
-        // budgetManager.updateTransaction(editingIndex, t)
-        // Reset editingIndex back to -1 and change button back to "Add Transaction"
-
         String amountText = amountField.getText();
         String category   = (String) categoryBox.getSelectedItem();
         String type       = (String) typeBox.getSelectedItem();
         String desc       = descField.getText();
  
-        // Validate using InputValidation
         if (!InputValidation.isValidArgument(amountText)) {
             JOptionPane.showMessageDialog(frame,
                 "Please enter a valid positive number for the amount.",
@@ -178,13 +188,23 @@ public class BudgetApp {
  
         double amount = InputValidation.parseAmount(amountText);
         LocalDate date = LocalDate.now();
- 
         Transaction t = new Transaction(date, amount, category, desc, type);
-        budgetManager.addTransaction(t);
-        tableModel.addRow(t.toRow());
+
+        if (editingIndex != -1) {
+            // Edit mode: update existing transaction in place
+            budgetManager.updateTransaction(editingIndex, t);
+            refreshTable(budgetManager.getTransactions());
+            editingIndex = -1;
+            addButton.setText("Add Transaction");
+        } else {
+            // Normal add
+            budgetManager.addTransaction(t);
+            tableModel.addRow(t.toRow());
+        }
  
         saveData();
         updateSummary();
+        statsPanel.refresh(budgetManager.getTransactions());
         amountField.setText("");
         descField.setText("");
     }
@@ -198,13 +218,11 @@ public class BudgetApp {
             return;
         }
  
-        // If a filter is active, find the real index in budgetManager
         String filterCat  = (String) filterCategoryBox.getSelectedItem();
         String filterType = (String) filterTypeBox.getSelectedItem();
         boolean isFiltered = !"All".equals(filterCat) || !"All".equals(filterType);
  
         if (isFiltered) {
-            // Find the actual transaction object shown in that row
             List<Transaction> filtered = budgetManager.filterTransactions(filterCat, filterType);
             Transaction toDelete = filtered.get(selectedRow);
             int realIndex = budgetManager.getTransactions().indexOf(toDelete);
@@ -216,21 +234,44 @@ public class BudgetApp {
         tableModel.removeRow(selectedRow);
         saveData();
         updateSummary();
+        statsPanel.refresh(budgetManager.getTransactions());
     }
 
     private void startEditTransaction() {
-        // TODO for Iteration 3:
-        // 1. Get selected row
-        // 2. Find matching real transaction index (handle if filters are active)
-        // 3. Load transaction values into amountField, descField, categoryBox, and typeBox
-        // 4. Set editingIndex = real index
-        // 5. Change addButton text to "Save Changes"
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(frame,
+                "Please select a row to edit.",
+                "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Resolve real index accounting for active filters
+        String filterCat  = (String) filterCategoryBox.getSelectedItem();
+        String filterType = (String) filterTypeBox.getSelectedItem();
+        boolean isFiltered = !"All".equals(filterCat) || !"All".equals(filterType);
+
+        Transaction toEdit;
+        if (isFiltered) {
+            List<Transaction> filtered = budgetManager.filterTransactions(filterCat, filterType);
+            toEdit = filtered.get(selectedRow);
+            editingIndex = budgetManager.getTransactions().indexOf(toEdit);
+        } else {
+            editingIndex = selectedRow;
+            toEdit = budgetManager.getTransactions().get(editingIndex);
+        }
+
+        // Populate input fields with the selected transaction's values
+        amountField.setText(String.valueOf(toEdit.getAmount()));
+        descField.setText(toEdit.getDescription());
+        categoryBox.setSelectedItem(toEdit.getCategory());
+        typeBox.setSelectedItem(toEdit.getType());
+        addButton.setText("Save Changes");
     }
  
     private void applyFilter() {
         String filterCat  = (String) filterCategoryBox.getSelectedItem();
         String filterType = (String) filterTypeBox.getSelectedItem();
- 
         List<Transaction> filtered = budgetManager.filterTransactions(filterCat, filterType);
         refreshTable(filtered);
     }
@@ -267,6 +308,10 @@ public class BudgetApp {
         updateSummary();
     }
  
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(BudgetApp::new);
+    }
+}
     public static void main(String[] args) {
         SwingUtilities.invokeLater(BudgetApp::new);
     }
