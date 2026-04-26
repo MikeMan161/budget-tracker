@@ -19,6 +19,9 @@ public class BudgetApp {
  
     private final BudgetManager budgetManager;
     private final String FILE_NAME = "finance_data.csv";
+
+    private int editingIndex = -1;
+    private JButton addButton;
  
     public BudgetApp() {
         budgetManager = new BudgetManager();
@@ -70,7 +73,7 @@ public class BudgetApp {
         descField = new JTextField();
         inputRow.add(descField);
  
-        JButton addButton = new JButton("Add Transaction");
+        addButton = new JButton("Add Transaction");
         addButton.addActionListener(e -> addTransaction());
         inputRow.add(addButton);
  
@@ -131,15 +134,29 @@ public class BudgetApp {
         JButton deleteButton = new JButton("Delete Selected");
         deleteButton.setForeground(Color.RED);
         deleteButton.addActionListener(e -> deleteTransaction());
+
+        // Edit button
+        JButton editButton = new JButton("Edit Selected");
+        editButton.addActionListener(e -> startEditTransaction());
+
+        // Buttons panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
  
         southPanel.add(summaryPanel, BorderLayout.CENTER);
-        southPanel.add(deleteButton, BorderLayout.EAST);
+        southPanel.add(buttonPanel, BorderLayout.EAST);
         return southPanel;
     }
  
     // --- Core Actions ---
  
     private void addTransaction() {
+        // TODO for Iteration 3
+        // if editingIndex != -1, update existing transaction instead of adding a new one
+        // budgetManager.updateTransaction(editingIndex, t)
+        // Reset editingIndex back to -1 and change button back to "Add Transaction"
+
         String amountText = amountField.getText();
         String category   = (String) categoryBox.getSelectedItem();
         String type       = (String) typeBox.getSelectedItem();
@@ -199,6 +216,15 @@ public class BudgetApp {
         tableModel.removeRow(selectedRow);
         saveData();
         updateSummary();
+    }
+
+    private void startEditTransaction() {
+        // TODO for Iteration 3:
+        // 1. Get selected row
+        // 2. Find matching real transaction index (handle if filters are active)
+        // 3. Load transaction values into amountField, descField, categoryBox, and typeBox
+        // 4. Set editingIndex = real index
+        // 5. Change addButton text to "Save Changes"
     }
  
     private void applyFilter() {
