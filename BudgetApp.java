@@ -312,7 +312,3 @@ public class BudgetApp {
         SwingUtilities.invokeLater(BudgetApp::new);
     }
 }
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(BudgetApp::new);
-    }
-}
