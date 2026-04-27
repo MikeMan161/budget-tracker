@@ -1,6 +1,7 @@
-# Personal Budget Tracker - Iteration 2
+# Personal Budget Tracker - Iteration 3
 
-A Java-based personal finance application that helps users track income and expenses, manage budgets, and filter transactions through a simple graphical interface.
+A Java-based personal desktop finance application that helps users track income and expenses, manage budgets, visualize
+spending trends, and organize transactions through a simple graphical interface.
 
 ## Team Members
 - Michael Rivera
@@ -8,24 +9,25 @@ A Java-based personal finance application that helps users track income and expe
 
 ---
 
-## What's New in Version 2
+## What's New in Version 3
 
-- **Income/Expense Type Tracking** — each transaction is now labeled as either Income or Expense
-- **Balance Summary Bar** — live display of total Income, total Expenses, and current Balance at the bottom of the window
-- **Filter Transactions** — filter the table by category, type, or both simultaneously
-- **Input Validation** — invalid amounts (non-numeric, negative, empty) and missing descriptions are caught with error dialogs
-- **Refactored Architecture** — logic is now split across dedicated classes (`Transaction`, `BudgetManager`, `FileManager`, `InputValidation`) instead of one monolithic file
+- **Statistics Dashboard** — `StatsPanel.java` component that provides summarized financial insights with visuals
+- **Edit Existing Transactions** — Users can select an existing transaction entry and modify its values
+- **Improved Interface Flow** — General usability improvements were made to layout organization
+- **Code Cleanup** — Classes further refined for readability and maintainability
 
 ---
 
-## Features (Version 2)
+## Features (Version 3)
 
 - Add transactions with amount, category (Food/Rent/Entertainment/Utilities/Other), type (Income/Expense), and description
+- Edit the values of existing transactions and save updates
 - Delete selected transactions from the table
-- Filter transactions by category and/or type; clear filter to restore full view
+- Filter transactions by category and/or type; clear filters to restore full view
 - Live balance summary showing total income, total expenses, and net balance
-- Data automatically saved to `finance_data.csv` on exit and loaded on startup
+- Data automatically saved to finance_data.csv on exit and loaded on startup
 - Input validation with user-friendly error messages
+- Statistics tab with visual financial summaries and a quick overview of account health
 
 ---
 
@@ -38,6 +40,7 @@ A Java-based personal finance application that helps users track income and expe
 | `BudgetManager.java` | Manages the list of transactions; handles filtering, totals, and balance |
 | `FileManager.java` | Handles reading and writing transactions to/from CSV |
 | `InputValidation.java` | Validates user input (amount, description, category, type) |
+| `StatsPanel.java` | Statistics dashboard panel |
 | `BudgetAppTest.java` | JUnit 5 unit tests for all supporting classes |
 | `finance_data.csv` | Local storage file for transaction data |
 
